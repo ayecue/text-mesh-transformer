@@ -12,6 +12,12 @@ exports[`transform simple 1`] = `
     [/myColor]"
 `;
 
+exports[`transform style without value 1`] = `
+"
+    was test
+    "
+`;
+
 exports[`transform two top level tags 1`] = `
 "
     was [myColor=red]test[/myColor] [myColor=blue][bold]wd xad

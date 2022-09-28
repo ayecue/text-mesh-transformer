@@ -66,4 +66,12 @@ describe('transform', function () {
 
     expect(result).toMatchSnapshot();
   });
+
+  test('style without value', function () {
+    const result = transform(`
+    was <link>test</link>
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
 });

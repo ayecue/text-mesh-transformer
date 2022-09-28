@@ -88,19 +88,6 @@ export const tagsWithValue: string[] = [
   Tag.Width
 ];
 
-export const tagsWithoutValue: string[] = [
-  Tag.Bold,
-  Tag.Italic,
-  Tag.Lowercase,
-  Tag.Uppercase,
-  Tag.NoParse,
-  Tag.NoBR,
-  Tag.Strikethrough,
-  Tag.Underline,
-  Tag.Sub,
-  Tag.Sup
-];
-
 export type TagCallback = (type: TagRecord, content: string) => string;
 
 export interface TagRecordOptions {
@@ -150,7 +137,7 @@ export class TagRecord {
 
 export default function (str: string, callback: TagCallback): string {
   const regexp = new RegExp(
-    `<(${tagsWithoutValue.join('|')})>|<(${tagsWithValue.join(
+    `<(${allTags.join('|')})>|<(${tagsWithValue.join(
       '|'
     )})=([^>]+)>|</(${allTags.join('|')})>`,
     'gi'
@@ -164,13 +151,17 @@ export default function (str: string, callback: TagCallback): string {
     const [markup, tagWithoutValue, tagWithValue, tagValue, tagClose] = match;
 
     if (tagWithoutValue) {
-      openTags.push(
-        new TagRecord({
-          tag: tagWithoutValue as Tag,
-          start: match.index + markup.length,
-          closureStart: match.index
-        })
-      );
+      const record = new TagRecord({
+        tag: tagWithoutValue as Tag,
+        start: match.index + markup.length,
+        closureStart: match.index
+      });
+
+      openTags.push(record);
+
+      if (tagsWithValue.includes(tagWithValue)) {
+        record.value = '';
+      }
     } else if (tagWithValue) {
       openTags.push(
         new TagRecord({
