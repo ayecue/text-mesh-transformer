@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`transform invalid closing of tag 1`] = `
+"
+    was [myColor=red]test [bold]wd xad</color>
+    [/bold][/myColor]"
+`;
+
+exports[`transform simple 1`] = `
+"
+    was [myColor=red]test [myColor=blue][underline][bold]wd[/bold][/underline][/myColor] xad
+    [/myColor]"
+`;
+
+exports[`transform unknown tags 1`] = `
+"
+    was [myColor=red]test <unknown>wd xad
+    [/myColor]"
+`;
+
+exports[`transform without close tags 1`] = `
+"
+    was [myColor=red]test [myColor=blue][underline][bold]wd xad
+    [/bold][/underline][/myColor][/myColor]"
+`;
