@@ -206,29 +206,27 @@ export default function (str: string, callback: TagCallback): string {
       const before = openTags[openTags.length - 1];
       before.children.unshift(remainingTag);
     } else {
-      tags.unshift(remainingTag);
+      tags.push(remainingTag);
     }
   }
 
   let output = str;
   let currentTag: TagRecord | undefined;
-  let offset = 0;
 
-  while ((currentTag = tags.shift())) {
-    const startIndex = currentTag.start - offset;
+  while ((currentTag = tags.pop())) {
+    const startIndex = currentTag.start;
     const endIndex = currentTag.end
-      ? Math.min(currentTag.end - offset, output.length)
+      ? Math.min(currentTag.end, output.length)
       : output.length;
-    const startClosureIndex = currentTag.closureStart - offset;
+    const startClosureIndex = currentTag.closureStart;
     const endClosureIndex = currentTag.closureEnd
-      ? Math.min(currentTag.closureEnd - offset, output.length)
+      ? Math.min(currentTag.closureEnd, output.length)
       : output.length;
     const content = output.substring(startIndex, endIndex);
     const left = output.substring(0, startClosureIndex);
     const right = output.substring(endClosureIndex, output.length);
 
     output = left + currentTag.render(content, callback) + right;
-    offset = str.length - output.length;
   }
 
   return output;

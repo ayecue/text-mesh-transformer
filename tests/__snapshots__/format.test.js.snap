@@ -12,6 +12,18 @@ exports[`transform simple 1`] = `
     [/myColor]"
 `;
 
+exports[`transform two top level tags 1`] = `
+"
+    was [myColor=red]test[/myColor] [myColor=blue][bold]wd xad
+    [/bold][/myColor]"
+`;
+
+exports[`transform two top level tags with inner styles 1`] = `
+"
+    was [myColor=red]te[underline]st[/underline][/myColor] [myColor=blue][bold]wd xad
+    [/bold][/myColor]"
+`;
+
 exports[`transform unknown tags 1`] = `
 "
     was [myColor=red]test <unknown>wd xad

@@ -50,4 +50,20 @@ describe('transform', function () {
 
     expect(result).toMatchSnapshot();
   });
+
+  test('two top level tags', function () {
+    const result = transform(`
+    was <color=red>test</color> <color=blue><b>wd xad
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
+
+  test('two top level tags with inner styles', function () {
+    const result = transform(`
+    was <color=red>te<u>st</u></color> <color=blue><b>wd xad
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
 });
