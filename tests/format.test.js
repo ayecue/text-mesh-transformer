@@ -1,6 +1,4 @@
-const TextMeshParser = require('../dist/index.js');
-const transform = TextMeshParser.default;
-const Tag = TextMeshParser.Tag;
+const { transform, Tag } = require('../dist/index.js');
 
 const testCallback = (openTag, content) => {
   switch (openTag.tag) {

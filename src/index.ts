@@ -135,7 +135,7 @@ export class TagRecord {
   }
 }
 
-export default function (str: string, callback: TagCallback): string {
+export function transform (str: string, callback: TagCallback): string {
   const regexp = new RegExp(
     `<(${allTags.join('|')})>|<(${tagsWithValue.join(
       '|'
