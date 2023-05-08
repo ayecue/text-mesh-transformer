@@ -72,4 +72,19 @@ describe('transform', function () {
 
     expect(result).toMatchSnapshot();
   });
+
+  test('multiline', function () {
+    const result = transform(`
+    <color=red>
+    title - text
+
+    -a --abc - <b>description</b>
+    -a --abc - <b>description</b>
+    -a --abc - <b>description</b>
+    -a --abc - <b>description</b>
+    </color>
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
 });

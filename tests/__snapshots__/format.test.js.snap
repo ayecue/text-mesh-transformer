@@ -6,6 +6,19 @@ exports[`transform invalid closing of tag 1`] = `
     [/bold][/myColor]"
 `;
 
+exports[`transform multiline 1`] = `
+"
+    [myColor=red]
+    title - text
+
+    -a --abc - [bold]description[/bold]
+    -a --abc - [bold]description[/bold]
+    -a --abc - [bold]description[/bold]
+    -a --abc - [bold]description[/bold]
+    [/myColor]
+    "
+`;
+
 exports[`transform simple 1`] = `
 "
     was [myColor=red]test [myColor=blue][underline][bold]wd[/bold][/underline][/myColor] xad

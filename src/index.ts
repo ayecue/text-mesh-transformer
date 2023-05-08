@@ -144,7 +144,6 @@ export function transform (str: string, callback: TagCallback): string {
   );
   const tags: TagRecord[] = [];
   const openTags: TagRecord[] = [];
-  let lastIndex = 0;
   let match;
 
   while ((match = regexp.exec(str))) {
@@ -179,7 +178,7 @@ export function transform (str: string, callback: TagCallback): string {
 
         if (openTags.length > 0) {
           const before = openTags[openTags.length - 1];
-          before.children.push(lastTag);
+          before.children.unshift(lastTag);
         } else {
           tags.push(lastTag);
         }
