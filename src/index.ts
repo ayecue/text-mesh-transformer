@@ -140,15 +140,20 @@ export enum TokenType {
   Close
 }
 
-export interface TokenTagResult {
+export interface TokenBase {
   tag: Tag;
   value?: string;
   type: TokenType;
 }
 
-export interface TokenResult extends TokenTagResult {
+export interface Token extends TokenBase {
   start: number;
   end: number;
+}
+
+export interface TokenizerResult {
+  token?: Token;
+  end: boolean;
 }
 
 export class Tokenizer {
@@ -183,8 +188,7 @@ export class Tokenizer {
     for (
       ;
       this.index < this.buffer.length &&
-      /[0-9a-f]/.test(this.buffer[this.index]) &&
-      this.index - startIndex < 6;
+      /[0-9a-f]/i.test(this.buffer[this.index]);
       this.index++
     );
     return this.buffer.slice(startIndex, this.index);
@@ -218,7 +222,7 @@ export class Tokenizer {
     return this.buffer.slice(startIndex, this.index);
   }
 
-  private parseOpeningTag(): TokenTagResult | null {
+  private parseOpeningTag(): TokenBase | null {
     this.skipWhitespace();
 
     let tag = null;
@@ -248,7 +252,7 @@ export class Tokenizer {
     };
   }
 
-  private parseClosingTag(): TokenTagResult | null {
+  private parseClosingTag(): TokenBase | null {
     this.skipWhitespace();
 
     const tag = this.parseTag();
@@ -265,11 +269,13 @@ export class Tokenizer {
     };
   }
 
-  next(): TokenResult | null {
+  next(): TokenizerResult {
     const startIndex = this.buffer.indexOf('<', this.index);
 
     if (startIndex === -1) {
-      return null;
+      return {
+        end: true
+      };
     }
 
     this.index = startIndex + 1;
@@ -283,21 +289,28 @@ export class Tokenizer {
     }
 
     if (result === null) {
-      return null;
+      return {
+        end: false
+      };
     }
 
     if (this.buffer[this.index] !== '>') {
-      return null;
+      return {
+        end: false
+      };
     }
 
     this.index++;
 
     return {
-      tag: result!.tag,
-      value: result?.value,
-      type: result!.type,
-      start: startIndex,
-      end: this.index
+      token: {
+        tag: result!.tag,
+        value: result?.value,
+        type: result!.type,
+        start: startIndex,
+        end: this.index
+      },
+      end: false
     };
   }
 }
@@ -306,20 +319,23 @@ export function transform(str: string, callback: TagCallback): string {
   const tokenizer = new Tokenizer(str);
   const tags: TagRecord[] = [];
   const openTags: TagRecord[] = [];
-  let match: TokenResult | null;
+  let match: TokenizerResult;
 
   while ((match = tokenizer.next())) {
-    const { tag, value, type, start, end } = match;
+    if (match.end) break;
+    if (!match.token) continue;
+
+    const { tag, value, type, start, end } = match.token;
 
     if (type === TokenType.Open) {
       if (!value) {
-        const record = new TagRecord({
-          tag,
-          start: end,
-          closureStart: start
-        });
-
-        openTags.push(record);
+        openTags.push(
+          new TagRecord({
+            tag,
+            start: end,
+            closureStart: start
+          })
+        );
       } else if (value) {
         openTags.push(
           new TagRecord({

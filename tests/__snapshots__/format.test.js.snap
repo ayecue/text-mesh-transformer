@@ -25,6 +25,19 @@ exports[`transform multiline 1`] = `
     "
 `;
 
+exports[`transform multiline 2 1`] = `
+"[bold][underline]tedit[/underline][/bold]
+    [myColor=yellow]1 | 	[/myColor][myMark=#ff00aa]$
+    2 | 	[myColor=#FFF]test[/myColor] = [myColor=#E11584]function[/myColor]()
+    3 | 		[myColor=#FFF]myTest[/myColor] = [myColor=#F9D71C]\\"hello world\\"[/myColor]
+    4 | 		[myColor=#009dc4]print[/myColor]([myColor=#FFF]myTest[/myColor])
+    5 | 	[myColor=#E11584]end function[/myColor]
+    6 | 	
+    7 | 	[myColor=#FFF]test[/myColor]
+    8 | 
+    [/myMark]"
+`;
+
 exports[`transform simple 1`] = `
 "
     was [myColor=red]test [myColor=blue][underline][bold]wd[/bold][/underline][/myColor] xad

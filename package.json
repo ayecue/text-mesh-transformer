@@ -1,6 +1,6 @@
 {
     "name": "text-mesh-transformer",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "Transformer for TextMesh Rich Text tags",
     "homepage": "https://github.com/ayecue/text-mesh-transformer",
     "main": "dist/index",

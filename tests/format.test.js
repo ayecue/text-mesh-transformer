@@ -5,6 +5,9 @@ const testCallback = (openTag, content) => {
     case Tag.Color: {
       return `[myColor=${openTag.value}]${content}[/myColor]`;
     }
+    case Tag.Mark: {
+      return `[myMark=${openTag.value}]${content}[/myMark]`;
+    }
     case Tag.Underline:
       return `[underline]${content}[/underline]`;
     case Tag.Italic:
@@ -105,4 +108,19 @@ describe('transform', function () {
 
     expect(result).toMatchSnapshot();
   });
+
+  test('multiline 2', function() {
+    const result = transform(`<b><u>tedit</u></b>
+    <color=yellow>1 | 	</color><mark=#ff00aa>$
+    2 | 	<color=#FFF>test</color> = <color=#E11584>function</color>()
+    3 | 		<color=#FFF>myTest</color> = <color=#F9D71C>"hello world"</color>
+    4 | 		<color=#009dc4>print</color>(<color=#FFF>myTest</color>)
+    5 | 	<color=#E11584>end function</color>
+    6 | 	
+    7 | 	<color=#FFF>test</color>
+    8 | 
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  })
 });
