@@ -1,5 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`transform color shorthand 1`] = `
+"
+    was [myColor=#333666]test[/myColor]
+    "
+`;
+
 exports[`transform invalid closing of tag 1`] = `
 "
     was [myColor=red]test [bold]wd xad</color>
@@ -23,6 +29,12 @@ exports[`transform simple 1`] = `
 "
     was [myColor=red]test [myColor=blue][underline][bold]wd[/bold][/underline][/myColor] xad
     [/myColor]"
+`;
+
+exports[`transform style with value in quotes 1`] = `
+"
+    was [font=\\" my test  value\\"]test[/font]
+    "
 `;
 
 exports[`transform style without value 1`] = `

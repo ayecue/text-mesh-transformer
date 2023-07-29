@@ -135,45 +135,205 @@ export class TagRecord {
   }
 }
 
-export function transform (str: string, callback: TagCallback): string {
-  const regexp = new RegExp(
-    `<(${allTags.join('|')})>|<(${tagsWithValue.join(
-      '|'
-    )})=([^>]+)>|</(${allTags.join('|')})>`,
-    'gi'
-  );
+export enum TokenType {
+  Open,
+  Close
+}
+
+export interface TokenTagResult {
+  tag: Tag;
+  value?: string;
+  type: TokenType;
+}
+
+export interface TokenResult extends TokenTagResult {
+  start: number;
+  end: number;
+}
+
+export class Tokenizer {
+  private buffer: string;
+  private index: number;
+
+  constructor(buffer: string) {
+    this.buffer = buffer;
+    this.index = 0;
+  }
+
+  private skipWhitespace() {
+    for (
+      ;
+      this.index < this.buffer.length && this.buffer[this.index] === ' ';
+      this.index++
+    );
+  }
+
+  private parseTag(): string {
+    const startIndex = this.index;
+    for (
+      ;
+      this.index < this.buffer.length && /[a-z-]/.test(this.buffer[this.index]);
+      this.index++
+    );
+    return this.buffer.slice(startIndex, this.index);
+  }
+
+  private parseHexCode(): string {
+    const startIndex = this.index;
+    for (
+      ;
+      this.index < this.buffer.length &&
+      /[0-9a-f]/.test(this.buffer[this.index]) &&
+      this.index - startIndex < 6;
+      this.index++
+    );
+    return this.buffer.slice(startIndex, this.index);
+  }
+
+  private parseValue(): string {
+    let startIndex = this.index;
+
+    if (this.buffer[this.index] === '"') {
+      startIndex++;
+      this.index++;
+      for (
+        ;
+        this.index < this.buffer.length && this.buffer[this.index] !== '"';
+        this.index++
+      );
+      this.index++;
+      return this.buffer.slice(startIndex, this.index - 1);
+    } else if (this.buffer[this.index] === '#') {
+      this.index++;
+      return '#' + this.parseHexCode();
+    }
+
+    for (
+      ;
+      this.index < this.buffer.length &&
+      this.buffer[this.index] !== ' ' &&
+      this.buffer[this.index] !== '>';
+      this.index++
+    );
+    return this.buffer.slice(startIndex, this.index);
+  }
+
+  private parseOpeningTag(): TokenTagResult | null {
+    this.skipWhitespace();
+
+    let tag = null;
+    let value;
+
+    if (this.buffer[this.index] === '#') {
+      this.index++;
+      tag = Tag.Color;
+      value = '#' + this.parseHexCode();
+    } else {
+      tag = this.parseTag();
+
+      if (!allTags.includes(tag)) {
+        return null;
+      }
+
+      if (tagsWithValue.includes(tag) && this.buffer[this.index] === '=') {
+        this.index++;
+        value = this.parseValue();
+      }
+    }
+
+    return {
+      tag: tag as Tag,
+      value,
+      type: TokenType.Open
+    };
+  }
+
+  private parseClosingTag(): TokenTagResult | null {
+    this.skipWhitespace();
+
+    const tag = this.parseTag();
+
+    if (!allTags.includes(tag)) {
+      return null;
+    }
+
+    this.skipWhitespace();
+
+    return {
+      tag: tag as Tag,
+      type: TokenType.Close
+    };
+  }
+
+  next(): TokenResult | null {
+    const startIndex = this.buffer.indexOf('<', this.index);
+
+    if (startIndex === -1) {
+      return null;
+    }
+
+    this.index = startIndex + 1;
+    let result;
+
+    if (this.buffer[this.index] === '/') {
+      this.index++;
+      result = this.parseClosingTag();
+    } else {
+      result = this.parseOpeningTag();
+    }
+
+    if (result === null) {
+      return null;
+    }
+
+    if (this.buffer[this.index] !== '>') {
+      return null;
+    }
+
+    this.index++;
+
+    return {
+      tag: result!.tag,
+      value: result?.value,
+      type: result!.type,
+      start: startIndex,
+      end: this.index
+    };
+  }
+}
+
+export function transform(str: string, callback: TagCallback): string {
+  const tokenizer = new Tokenizer(str);
   const tags: TagRecord[] = [];
   const openTags: TagRecord[] = [];
-  let match;
+  let match: TokenResult | null;
 
-  while ((match = regexp.exec(str))) {
-    const [markup, tagWithoutValue, tagWithValue, tagValue, tagClose] = match;
+  while ((match = tokenizer.next())) {
+    const { tag, value, type, start, end } = match;
 
-    if (tagWithoutValue) {
-      const record = new TagRecord({
-        tag: tagWithoutValue as Tag,
-        start: match.index + markup.length,
-        closureStart: match.index
-      });
+    if (type === TokenType.Open) {
+      if (!value) {
+        const record = new TagRecord({
+          tag,
+          start: end,
+          closureStart: start
+        });
 
-      openTags.push(record);
-
-      if (tagsWithValue.includes(tagWithValue)) {
-        record.value = '';
+        openTags.push(record);
+      } else if (value) {
+        openTags.push(
+          new TagRecord({
+            tag,
+            value,
+            start: end,
+            closureStart: start
+          })
+        );
       }
-    } else if (tagWithValue) {
-      openTags.push(
-        new TagRecord({
-          tag: tagWithValue as Tag,
-          value: tagValue,
-          start: match.index + markup.length,
-          closureStart: match.index
-        })
-      );
-    } else if (tagClose) {
+    } else if (type === TokenType.Close) {
       const lastTag = openTags[openTags.length - 1];
 
-      if (tagClose === lastTag.tag) {
+      if (tag === lastTag.tag) {
         openTags.pop();
 
         if (openTags.length > 0) {
@@ -183,8 +343,8 @@ export function transform (str: string, callback: TagCallback): string {
           tags.push(lastTag);
         }
 
-        lastTag.end = match.index;
-        lastTag.closureEnd = match.index + markup.length;
+        lastTag.end = start;
+        lastTag.closureEnd = end;
       }
     }
   }

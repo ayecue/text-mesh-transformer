@@ -11,6 +11,8 @@ const testCallback = (openTag, content) => {
       return `[italic]${content}[/italic]`;
     case Tag.Bold:
       return `[bold]${content}[/bold]`;
+    case Tag.Font:
+      return `[font="${openTag.value}"]${content}[/font]`;
   }
 
   return content;
@@ -68,6 +70,22 @@ describe('transform', function () {
   test('style without value', function () {
     const result = transform(`
     was <link>test</link>
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
+
+  test('style with value in quotes', function () {
+    const result = transform(`
+    was <font=" my test  value">test</font>
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
+
+  test('color shorthand', function () {
+    const result = transform(`
+    was <#333666>test</color>
     `, testCallback);
 
     expect(result).toMatchSnapshot();
