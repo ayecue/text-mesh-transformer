@@ -3,10 +3,10 @@ const { transform, Tag } = require('../dist/index.js');
 const testCallback = (openTag, content) => {
   switch (openTag.tag) {
     case Tag.Color: {
-      return `[myColor=${openTag.value}]${content}[/myColor]`;
+      return `[myColor=${openTag.attributes.value}]${content}[/myColor]`;
     }
     case Tag.Mark: {
-      return `[myMark=${openTag.value}]${content}[/myMark]`;
+      return `[myMark=${openTag.attributes.value}]${content}[/myMark]`;
     }
     case Tag.Underline:
       return `[underline]${content}[/underline]`;
@@ -15,7 +15,9 @@ const testCallback = (openTag, content) => {
     case Tag.Bold:
       return `[bold]${content}[/bold]`;
     case Tag.Font:
-      return `[font="${openTag.value}"]${content}[/font]`;
+      return `[font="${openTag.attributes.value}"]${content}[/font]`;
+    case Tag.Sprite:
+      return `[sprite="${openTag.attributes.value}", "${openTag.attributes.foo}"]${content}[/sprite]`;
   }
 
   return content;
@@ -25,6 +27,14 @@ describe('transform', function () {
   test('simple', function () {
     const result = transform(`
     was <color=red>test <color=blue><u><b>wd</b></u></color> xad
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
+
+  test('tag with two attributes', function () {
+    const result = transform(`
+    was <sprite=0 foo=somename>test </sprite> xad
     `, testCallback);
 
     expect(result).toMatchSnapshot();

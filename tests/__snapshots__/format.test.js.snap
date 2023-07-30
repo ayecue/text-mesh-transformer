@@ -56,6 +56,12 @@ exports[`transform style without value 1`] = `
     "
 `;
 
+exports[`transform tag with two attributes 1`] = `
+"
+    was [sprite=\\"0\\", \\"somename\\"]test [/sprite] xad
+    "
+`;
+
 exports[`transform two top level tags 1`] = `
 "
     was [myColor=red]test[/myColor] [myColor=blue][bold]wd xad

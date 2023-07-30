@@ -1,355 +1,48 @@
-export enum Tag {
-  Align = 'align',
-  Alpha = 'alpha',
-  Color = 'color',
-  Bold = 'b',
-  Italic = 'i',
-  CSpace = 'cspace',
-  Font = 'font',
-  Indent = 'indent',
-  LineHeight = 'line-height',
-  LineIndent = 'line-indent',
-  Link = 'link',
-  Lowercase = 'lowercase',
-  Uppercase = 'uppercase',
-  Smallcaps = 'smallcaps',
-  Margin = 'margin',
-  Mark = 'mark',
-  MSpace = 'mspace',
-  NoParse = 'noparse',
-  NoBR = 'nobr',
-  Page = 'page',
-  Pos = 'pos',
-  Size = 'size',
-  Space = 'space',
-  Sprite = 'sprite',
-  Strikethrough = 's',
-  Underline = 'u',
-  Style = 'style',
-  Sub = 'sub',
-  Sup = 'sup',
-  VOffset = 'voffset',
-  Width = 'width'
-}
+import {
+  Parser,
+  ParserResult,
+  TagElementType,
+  TagElementWithAttributes
+} from './parser';
+import { TagCallback, TagRecord } from './tag-record';
 
-export const allTags: string[] = [
-  Tag.Align,
-  Tag.Alpha,
-  Tag.Color,
-  Tag.Bold,
-  Tag.Italic,
-  Tag.CSpace,
-  Tag.Font,
-  Tag.Indent,
-  Tag.LineHeight,
-  Tag.LineIndent,
-  Tag.Link,
-  Tag.Lowercase,
-  Tag.Uppercase,
-  Tag.Smallcaps,
-  Tag.Margin,
-  Tag.Mark,
-  Tag.MSpace,
-  Tag.NoParse,
-  Tag.NoBR,
-  Tag.Page,
-  Tag.Pos,
-  Tag.Size,
-  Tag.Space,
-  Tag.Sprite,
-  Tag.Strikethrough,
-  Tag.Underline,
-  Tag.Style,
-  Tag.Sub,
-  Tag.Sup,
-  Tag.VOffset,
-  Tag.Width
-];
-
-export const tagsWithValue: string[] = [
-  Tag.Align,
-  Tag.Alpha,
-  Tag.Color,
-  Tag.CSpace,
-  Tag.Font,
-  Tag.Indent,
-  Tag.LineHeight,
-  Tag.LineIndent,
-  Tag.Link,
-  Tag.Margin,
-  Tag.Mark,
-  Tag.MSpace,
-  Tag.Pos,
-  Tag.Size,
-  Tag.Space,
-  Tag.Sprite,
-  Tag.Style,
-  Tag.VOffset,
-  Tag.Width
-];
-
-export type TagCallback = (type: TagRecord, content: string) => string;
-
-export interface TagRecordOptions {
-  tag: Tag;
-  start: number;
-  closureStart: number;
-  value?: string;
-}
-
-export class TagRecord {
-  tag: Tag;
-  value?: string;
-  start: number;
-  closureStart: number;
-  end?: number;
-  closureEnd?: number;
-  children: TagRecord[];
-
-  constructor(options: TagRecordOptions) {
-    this.tag = options.tag;
-    this.value = options.value;
-    this.start = options.start;
-    this.closureStart = options.closureStart;
-    this.children = [];
-  }
-
-  render(content: string, callback: TagCallback) {
-    for (const child of this.children) {
-      const startIndex = child.start - this.start;
-      const endIndex = child.end
-        ? Math.min(child.end - this.start, content.length)
-        : content.length;
-      const startClosureIndex = child.closureStart - this.start;
-      const endClosureIndex = child.closureEnd
-        ? Math.min(child.closureEnd - this.start, content.length)
-        : content.length;
-      const childContent = content.substring(startIndex, endIndex);
-      const left = content.substring(0, startClosureIndex);
-      const right = content.substring(endClosureIndex, content.length);
-
-      content = left + child.render(childContent, callback) + right;
-    }
-
-    return callback(this, content);
-  }
-}
-
-export enum TokenType {
-  Open,
-  Close
-}
-
-export interface TokenBase {
-  tag: Tag;
-  value?: string;
-  type: TokenType;
-}
-
-export interface Token extends TokenBase {
-  start: number;
-  end: number;
-}
-
-export interface TokenizerResult {
-  token?: Token;
-  end: boolean;
-}
-
-export class Tokenizer {
-  private buffer: string;
-  private index: number;
-
-  constructor(buffer: string) {
-    this.buffer = buffer;
-    this.index = 0;
-  }
-
-  private skipWhitespace() {
-    for (
-      ;
-      this.index < this.buffer.length && this.buffer[this.index] === ' ';
-      this.index++
-    );
-  }
-
-  private parseTag(): string {
-    const startIndex = this.index;
-    for (
-      ;
-      this.index < this.buffer.length && /[a-z-]/.test(this.buffer[this.index]);
-      this.index++
-    );
-    return this.buffer.slice(startIndex, this.index);
-  }
-
-  private parseHexCode(): string {
-    const startIndex = this.index;
-    for (
-      ;
-      this.index < this.buffer.length &&
-      /[0-9a-f]/i.test(this.buffer[this.index]);
-      this.index++
-    );
-    return this.buffer.slice(startIndex, this.index);
-  }
-
-  private parseValue(): string {
-    let startIndex = this.index;
-
-    if (this.buffer[this.index] === '"') {
-      startIndex++;
-      this.index++;
-      for (
-        ;
-        this.index < this.buffer.length && this.buffer[this.index] !== '"';
-        this.index++
-      );
-      this.index++;
-      return this.buffer.slice(startIndex, this.index - 1);
-    } else if (this.buffer[this.index] === '#') {
-      this.index++;
-      return '#' + this.parseHexCode();
-    }
-
-    for (
-      ;
-      this.index < this.buffer.length &&
-      this.buffer[this.index] !== ' ' &&
-      this.buffer[this.index] !== '>';
-      this.index++
-    );
-    return this.buffer.slice(startIndex, this.index);
-  }
-
-  private parseOpeningTag(): TokenBase | null {
-    this.skipWhitespace();
-
-    let tag = null;
-    let value;
-
-    if (this.buffer[this.index] === '#') {
-      this.index++;
-      tag = Tag.Color;
-      value = '#' + this.parseHexCode();
-    } else {
-      tag = this.parseTag();
-
-      if (!allTags.includes(tag)) {
-        return null;
-      }
-
-      if (tagsWithValue.includes(tag) && this.buffer[this.index] === '=') {
-        this.index++;
-        value = this.parseValue();
-      }
-    }
-
-    return {
-      tag: tag as Tag,
-      value,
-      type: TokenType.Open
-    };
-  }
-
-  private parseClosingTag(): TokenBase | null {
-    this.skipWhitespace();
-
-    const tag = this.parseTag();
-
-    if (!allTags.includes(tag)) {
-      return null;
-    }
-
-    this.skipWhitespace();
-
-    return {
-      tag: tag as Tag,
-      type: TokenType.Close
-    };
-  }
-
-  next(): TokenizerResult {
-    const startIndex = this.buffer.indexOf('<', this.index);
-
-    if (startIndex === -1) {
-      return {
-        end: true
-      };
-    }
-
-    this.index = startIndex + 1;
-    let result;
-
-    if (this.buffer[this.index] === '/') {
-      this.index++;
-      result = this.parseClosingTag();
-    } else {
-      result = this.parseOpeningTag();
-    }
-
-    if (result === null) {
-      return {
-        end: false
-      };
-    }
-
-    if (this.buffer[this.index] !== '>') {
-      return {
-        end: false
-      };
-    }
-
-    this.index++;
-
-    return {
-      token: {
-        tag: result!.tag,
-        value: result?.value,
-        type: result!.type,
-        start: startIndex,
-        end: this.index
-      },
-      end: false
-    };
-  }
-}
+export { allTags, Tag, tagsWithValue } from './types';
 
 export function transform(str: string, callback: TagCallback): string {
-  const tokenizer = new Tokenizer(str);
+  const tokenizer = new Parser(str);
   const tags: TagRecord[] = [];
   const openTags: TagRecord[] = [];
-  let match: TokenizerResult;
+  let match: ParserResult;
 
   while ((match = tokenizer.next())) {
-    if (match.end) break;
-    if (!match.token) continue;
+    if (match.isEnd) break;
+    if (!match.item) continue;
 
-    const { tag, value, type, start, end } = match.token;
+    const { element, start, end } = match.item;
 
-    if (type === TokenType.Open) {
-      if (!value) {
+    if (element.type === TagElementType.Open) {
+      if (element instanceof TagElementWithAttributes) {
         openTags.push(
           new TagRecord({
-            tag,
+            tag: element.tag,
+            attributes: element.attributes,
             start: end,
             closureStart: start
           })
         );
-      } else if (value) {
+      } else {
         openTags.push(
           new TagRecord({
-            tag,
-            value,
+            tag: element.tag,
             start: end,
             closureStart: start
           })
         );
       }
-    } else if (type === TokenType.Close) {
+    } else if (element.type === TagElementType.Close) {
       const lastTag = openTags[openTags.length - 1];
 
-      if (tag === lastTag.tag) {
+      if (element.tag === lastTag.tag) {
         openTags.pop();
 
         if (openTags.length > 0) {
