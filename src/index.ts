@@ -6,6 +6,7 @@ import {
 } from './parser';
 import { TagCallback, TagRecord } from './tag-record';
 
+export { TagCallback, TagRecord, TagRecordOptions } from './tag-record';
 export { allTags, Tag, tagsWithValue } from './types';
 
 export function transform(str: string, callback: TagCallback): string {
