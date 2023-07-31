@@ -4,9 +4,21 @@ import {
   TagElementType,
   TagElementWithAttributes
 } from './parser';
-import { TagCallback, TagRecord } from './tag-record';
+import {
+  TagCallback,
+  TagRecord,
+  TagRecordClose,
+  TagRecordOpen
+} from './tag-record';
 
-export { TagCallback, TagRecord, TagRecordOptions } from './tag-record';
+export {
+  TagCallback,
+  TagRecord,
+  TagRecordClose,
+  TagRecordOpen,
+  TagRecordOpenOptions,
+  TagRecordOptions
+} from './tag-record';
 export { allTags, Tag, tagsWithValue } from './types';
 
 export function transform(str: string, callback: TagCallback): string {
@@ -23,38 +35,39 @@ export function transform(str: string, callback: TagCallback): string {
 
     if (element.type === TagElementType.Open) {
       if (element instanceof TagElementWithAttributes) {
-        openTags.push(
-          new TagRecord({
-            tag: element.tag,
-            attributes: element.attributes,
-            start: end,
-            closureStart: start
-          })
-        );
+        const tagWithAttr = new TagRecordOpen({
+          type: element.tag,
+          attributes: element.attributes,
+          start,
+          end
+        });
+        tags.push(tagWithAttr);
+        openTags.push(tagWithAttr);
       } else {
-        openTags.push(
-          new TagRecord({
-            tag: element.tag,
-            start: end,
-            closureStart: start
-          })
-        );
+        const tagWithoutAttr = new TagRecordOpen({
+          type: element.tag,
+          start,
+          end
+        });
+        tags.push(tagWithoutAttr);
+        openTags.push(tagWithoutAttr);
       }
     } else if (element.type === TagElementType.Close) {
       const lastTag = openTags[openTags.length - 1];
 
-      if (element.tag === lastTag.tag) {
+      if (element.tag === lastTag.type) {
         openTags.pop();
 
-        if (openTags.length > 0) {
-          const before = openTags[openTags.length - 1];
-          before.children.unshift(lastTag);
-        } else {
-          tags.push(lastTag);
-        }
+        const closingTag = new TagRecordClose({
+          type: element.tag,
+          start,
+          end,
+          previous: lastTag as TagRecordOpen
+        });
 
-        lastTag.end = start;
-        lastTag.closureEnd = end;
+        (lastTag as TagRecordOpen).next = closingTag;
+
+        tags.push(closingTag);
       }
     }
   }
@@ -62,31 +75,26 @@ export function transform(str: string, callback: TagCallback): string {
   let remainingTag: TagRecord | undefined;
 
   while ((remainingTag = openTags.pop())) {
-    if (openTags.length > 0) {
-      const before = openTags[openTags.length - 1];
-      before.children.unshift(remainingTag);
-    } else {
-      tags.push(remainingTag);
-    }
+    const closingTag = new TagRecordClose({
+      type: remainingTag.type,
+      start: str.length,
+      end: str.length,
+      previous: remainingTag as TagRecordOpen
+    });
+
+    (remainingTag as TagRecordOpen).next = closingTag;
+
+    tags.push(closingTag);
   }
 
   let output = str;
   let currentTag: TagRecord | undefined;
 
   while ((currentTag = tags.pop())) {
-    const startIndex = currentTag.start;
-    const endIndex = currentTag.end
-      ? Math.min(currentTag.end, output.length)
-      : output.length;
-    const startClosureIndex = currentTag.closureStart;
-    const endClosureIndex = currentTag.closureEnd
-      ? Math.min(currentTag.closureEnd, output.length)
-      : output.length;
-    const content = output.substring(startIndex, endIndex);
-    const left = output.substring(0, startClosureIndex);
-    const right = output.substring(endClosureIndex, output.length);
+    const left = output.substring(0, currentTag.start);
+    const right = output.substring(currentTag.end, output.length);
 
-    output = left + currentTag.render(content, callback) + right;
+    output = left + callback(currentTag) + right;
   }
 
   return output;

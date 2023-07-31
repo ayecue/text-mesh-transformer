@@ -1,26 +1,47 @@
-const { transform, Tag } = require('../dist/index.js');
+const { transform, Tag, TagRecordOpen, TagRecordClose } = require('../dist/index.js');
 
-const testCallback = (openTag, content) => {
-  switch (openTag.tag) {
-    case Tag.Color: {
-      return `[myColor=${openTag.attributes.value}]${content}[/myColor]`;
+const testCallback = (tag) => {
+  if (tag instanceof TagRecordOpen) {
+    switch (tag.type) {
+      case Tag.Color: {
+        return `[myColor=${tag.attributes.value}]`;
+      }
+      case Tag.Mark: {
+        return `[myMark=${tag.attributes.value}]`;
+      }
+      case Tag.Underline:
+        return `[underline]`;
+      case Tag.Italic:
+        return `[italic]`;
+      case Tag.Bold:
+        return `[bold]`;
+      case Tag.Font:
+        return `[font="${tag.attributes.value}"]`;
+      case Tag.Sprite:
+        return `[sprite="${tag.attributes.value}", "${tag.attributes.foo}"]`;
     }
-    case Tag.Mark: {
-      return `[myMark=${openTag.attributes.value}]${content}[/myMark]`;
+  } else if (tag instanceof TagRecordClose) {
+    switch (tag.type) {
+      case Tag.Color: {
+        return `[/myColor]`;
+      }
+      case Tag.Mark: {
+        return `[/myMark]`;
+      }
+      case Tag.Underline:
+        return `[/underline]`;
+      case Tag.Italic:
+        return `[/italic]`;
+      case Tag.Bold:
+        return `[/bold]`;
+      case Tag.Font:
+        return `[/font]`;
+      case Tag.Sprite:
+        return `[/sprite]`;
     }
-    case Tag.Underline:
-      return `[underline]${content}[/underline]`;
-    case Tag.Italic:
-      return `[italic]${content}[/italic]`;
-    case Tag.Bold:
-      return `[bold]${content}[/bold]`;
-    case Tag.Font:
-      return `[font="${openTag.attributes.value}"]${content}[/font]`;
-    case Tag.Sprite:
-      return `[sprite="${openTag.attributes.value}", "${openTag.attributes.foo}"]${content}[/sprite]`;
   }
 
-  return content;
+  return '';
 };
 
 describe('transform', function () {

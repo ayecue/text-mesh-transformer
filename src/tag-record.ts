@@ -1,48 +1,51 @@
 import { Tag } from './types';
 
-export type TagCallback = (type: TagRecord, content: string) => string;
+export type TagCallback = (type: TagRecord) => string;
 
 export interface TagRecordOptions {
-  tag: Tag;
+  type: Tag;
   start: number;
-  closureStart: number;
+  end: number;
   attributes?: Record<string, string>;
 }
 
 export class TagRecord {
-  tag: Tag;
-  attributes: Record<string, string>;
-  start: number;
-  closureStart: number;
-  end?: number;
-  closureEnd?: number;
-  children: TagRecord[];
+  readonly type: Tag;
+  readonly start: number;
+  readonly end: number;
 
   constructor(options: TagRecordOptions) {
-    this.tag = options.tag;
-    this.attributes = options.attributes ?? {};
+    this.type = options.type;
     this.start = options.start;
-    this.closureStart = options.closureStart;
-    this.children = [];
+    this.end = options.end;
   }
+}
 
-  render(content: string, callback: TagCallback) {
-    for (const child of this.children) {
-      const startIndex = child.start - this.start;
-      const endIndex = child.end
-        ? Math.min(child.end - this.start, content.length)
-        : content.length;
-      const startClosureIndex = child.closureStart - this.start;
-      const endClosureIndex = child.closureEnd
-        ? Math.min(child.closureEnd - this.start, content.length)
-        : content.length;
-      const childContent = content.substring(startIndex, endIndex);
-      const left = content.substring(0, startClosureIndex);
-      const right = content.substring(endClosureIndex, content.length);
+export interface TagRecordOpenOptions extends TagRecordOptions {
+  attributes?: Record<string, string>;
+  next?: TagRecordClose;
+}
 
-      content = left + child.render(childContent, callback) + right;
-    }
+export class TagRecordOpen extends TagRecord {
+  readonly attributes: Record<string, string>;
+  next: TagRecordClose | null;
 
-    return callback(this, content);
+  constructor(options: TagRecordOpenOptions) {
+    super(options);
+    this.attributes = options.attributes ?? {};
+    this.next = options.next ?? null;
+  }
+}
+
+export interface TagRecordCloseOptions extends TagRecordOptions {
+  previous: TagRecordOpen;
+}
+
+export class TagRecordClose extends TagRecord {
+  previous: TagRecordOpen;
+
+  constructor(options: TagRecordCloseOptions) {
+    super(options);
+    this.previous = options.previous;
   }
 }
