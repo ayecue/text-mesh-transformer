@@ -53,6 +53,30 @@ export class TagRecordOpen extends TagRecord {
 
     return false;
   }
+
+  close({
+    content = '',
+    raw = '',
+    start = this.end,
+    end = this.end
+  }: {
+    content?: string;
+    raw?: string;
+    start?: number;
+    end?: number;
+  } = {}) {
+    const closingTag = new TagRecordClose({
+      type: this.type,
+      raw,
+      start,
+      end,
+      previous: this
+    });
+    this.next = closingTag;
+    this.content = content;
+
+    return closingTag;
+  }
 }
 
 export interface TagRecordCloseOptions extends TagRecordOptions {

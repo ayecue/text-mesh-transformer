@@ -89,3 +89,11 @@ export const tagsWithValue: string[] = [
 ];
 
 export const tagsWithNoBody: string[] = [Tag.Sprite, Tag.Pos];
+export const tagsAutoclose: string[] = [
+  Tag.VOffset,
+  Tag.Size,
+  Tag.CSpace,
+  Tag.Align,
+  Tag.Width,
+  Tag.Font
+];

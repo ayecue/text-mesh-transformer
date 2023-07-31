@@ -5,7 +5,7 @@ import {
   TagElementWithAttributes
 } from './parser';
 import { TagCallback, TagRecordClose, TagRecordOpen } from './tag-record';
-import { tagsWithNoBody } from './types';
+import { tagsAutoclose, tagsWithNoBody } from './types';
 
 export {
   TagCallback,
@@ -30,6 +30,36 @@ export function transform(str: string, callback: TagCallback): string {
     const { element, raw, start, end } = match.item;
 
     if (element.type === TagElementType.Open) {
+      if (tagsAutoclose.includes(element.tag)) {
+        const previousItem = openTags.findIndex(
+          (item) => item.type === element.tag
+        );
+
+        if (previousItem !== -1) {
+          let currentTag: TagRecordOpen | undefined;
+
+          while ((currentTag = openTags.pop())) {
+            const closingTag = currentTag.close({
+              start,
+              end: start,
+              content: str.slice(currentTag.end, start)
+            });
+
+            if (openTags.length > 0) {
+              const before = openTags[openTags.length - 1];
+              before.children.unshift(closingTag);
+              currentTag.parent = before;
+            } else {
+              tags.push(closingTag);
+            }
+
+            if (currentTag.type === element.tag) {
+              break;
+            }
+          }
+        }
+      }
+
       if (element instanceof TagElementWithAttributes) {
         const tagWithAttr = new TagRecordOpen({
           type: element.tag,
@@ -51,16 +81,7 @@ export function transform(str: string, callback: TagCallback): string {
 
       if (tagsWithNoBody.includes(element.tag)) {
         const lastTag = openTags.pop()!;
-
-        const closingTag = new TagRecordClose({
-          type: element.tag,
-          raw: '',
-          start: end,
-          end,
-          previous: lastTag as TagRecordOpen
-        });
-        lastTag.next = closingTag;
-        lastTag.content = '';
+        const closingTag = lastTag.close();
 
         if (openTags.length > 0) {
           const before = openTags[openTags.length - 1];
@@ -76,15 +97,12 @@ export function transform(str: string, callback: TagCallback): string {
       if (element.tag === lastTag?.type) {
         openTags.pop();
 
-        const closingTag = new TagRecordClose({
-          type: element.tag,
+        const closingTag = lastTag.close({
           raw,
           start,
           end,
-          previous: lastTag as TagRecordOpen
+          content: str.slice(lastTag.end, start)
         });
-        lastTag.next = closingTag;
-        lastTag.content = str.slice(lastTag.end, closingTag.start);
 
         if (openTags.length > 0) {
           const before = openTags[openTags.length - 1];
