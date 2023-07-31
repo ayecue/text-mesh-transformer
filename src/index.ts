@@ -4,12 +4,7 @@ import {
   TagElementType,
   TagElementWithAttributes
 } from './parser';
-import {
-  TagCallback,
-  TagRecord,
-  TagRecordClose,
-  TagRecordOpen
-} from './tag-record';
+import { TagCallback, TagRecordClose, TagRecordOpen } from './tag-record';
 
 export {
   TagCallback,
@@ -23,9 +18,8 @@ export { allTags, Tag, tagsWithValue } from './types';
 
 export function transform(str: string, callback: TagCallback): string {
   const tokenizer = new Parser(str);
-  const tags: TagRecord[] = [];
-  const openTags: TagRecord[] = [];
-  const context = {};
+  const tags: TagRecordClose[] = [];
+  const openTags: TagRecordOpen[] = [];
   let match: ParserResult;
 
   while ((match = tokenizer.next())) {
@@ -42,8 +36,7 @@ export function transform(str: string, callback: TagCallback): string {
           attributes: element.attributes,
           start,
           end
-        }).transform(context, callback);
-        tags.push(tagWithAttr);
+        });
         openTags.push(tagWithAttr);
       } else {
         const tagWithoutAttr = new TagRecordOpen({
@@ -51,8 +44,7 @@ export function transform(str: string, callback: TagCallback): string {
           raw,
           start,
           end
-        }).transform(context, callback);
-        tags.push(tagWithoutAttr);
+        });
         openTags.push(tagWithoutAttr);
       }
     } else if (element.type === TagElementType.Close) {
@@ -67,14 +59,22 @@ export function transform(str: string, callback: TagCallback): string {
           start,
           end,
           previous: lastTag as TagRecordOpen
-        }).transform(context, callback);
+        });
+        lastTag.next = closingTag;
+        lastTag.content = str.slice(lastTag.end, closingTag.start);
 
-        tags.push(closingTag);
+        if (openTags.length > 0) {
+          const before = openTags[openTags.length - 1];
+          before.children.unshift(closingTag);
+          lastTag.parent = before;
+        } else {
+          tags.push(closingTag);
+        }
       }
     }
   }
 
-  let remainingTag: TagRecord | undefined;
+  let remainingTag: TagRecordOpen | undefined;
 
   while ((remainingTag = openTags.pop())) {
     const closingTag = new TagRecordClose({
@@ -82,20 +82,54 @@ export function transform(str: string, callback: TagCallback): string {
       raw: '',
       start: str.length,
       end: str.length,
-      previous: remainingTag as TagRecordOpen
-    }).transform(context, callback);
+      previous: remainingTag
+    });
+    remainingTag.next = closingTag;
+    remainingTag.content = str.slice(remainingTag.end, closingTag.start);
 
-    tags.push(closingTag);
+    if (openTags.length > 0) {
+      const before = openTags[openTags.length - 1] as TagRecordOpen;
+      before.children.unshift(closingTag);
+      remainingTag.parent = before;
+    } else {
+      tags.push(closingTag);
+    }
+  }
+
+  const flatTags = [];
+  let currentTag: TagRecordClose | undefined;
+
+  while ((currentTag = tags.shift())) {
+    flatTags.push(currentTag);
+
+    const queue = [...currentTag.previous.children];
+    let childTag: TagRecordClose | undefined;
+
+    while ((childTag = queue.pop())) {
+      flatTags.push(childTag);
+      queue.push(...childTag.previous.children);
+    }
   }
 
   let output = str;
-  let currentTag: TagRecord | undefined;
 
-  while ((currentTag = tags.pop())) {
-    const left = output.substring(0, currentTag.start);
-    const right = output.substring(currentTag.end, output.length);
+  while ((currentTag = flatTags.pop())) {
+    const offset = currentTag.previous.parent?.end ?? 0;
+    const content = currentTag.previous.parent?.content ?? output;
+    const childContent = currentTag.previous.content;
 
-    output = left + currentTag.out + right;
+    const startClosureIndex = currentTag.previous.start - offset;
+    const endClosureIndex = Math.min(currentTag.end - offset, output.length);
+
+    const left = content.substring(0, startClosureIndex);
+    const right = content.substring(endClosureIndex, output.length);
+
+    if (currentTag.previous.parent) {
+      const transformed = callback(currentTag.previous, childContent);
+      currentTag.previous.parent.content = left + transformed + right;
+    } else {
+      output = left + callback(currentTag.previous, childContent) + right;
+    }
   }
 
   return output;

@@ -1,57 +1,30 @@
 const { transform, Tag, TagRecordOpen, TagRecordClose } = require('../dist/index.js');
 
-const testCallback = (tag, context) => {
-  if (tag.type !== Tag.NoParse && context.noParse) {
-    return tag.raw;
+const testCallback = (openTag, content) => {
+  if (openTag.isWrappedBy(Tag.NoParse)) {
+    return `${openTag.raw}${content}${openTag.next.raw}`
   }
 
-  if (tag instanceof TagRecordOpen) {
-    switch (tag.type) {
-      case Tag.Color: {
-        return `[myColor=${tag.attributes.value}]`;
-      }
-      case Tag.Mark: {
-        return `[myMark=${tag.attributes.value}]`;
-      }
-      case Tag.Underline:
-        return `[underline]`;
-      case Tag.Italic:
-        return `[italic]`;
-      case Tag.Bold:
-        return `[bold]`;
-      case Tag.Font:
-        return `[font="${tag.attributes.value}"]`;
-      case Tag.Sprite:
-        return `[sprite="${tag.attributes.value}", "${tag.attributes.foo}"]`;
-      case Tag.NoParse:
-        context.noParse = true;
-        return '';
+  switch (openTag.type) {
+    case Tag.Color: {
+      return `[myColor=${openTag.attributes.value}]${content}[/myColor]`;
     }
-  } else if (tag instanceof TagRecordClose) {
-    switch (tag.type) {
-      case Tag.Color: {
-        return `[/myColor]`;
-      }
-      case Tag.Mark: {
-        return `[/myMark]`;
-      }
-      case Tag.Underline:
-        return `[/underline]`;
-      case Tag.Italic:
-        return `[/italic]`;
-      case Tag.Bold:
-        return `[/bold]`;
-      case Tag.Font:
-        return `[/font]`;
-      case Tag.Sprite:
-        return `[/sprite]`;
-      case Tag.NoParse:
-        context.noParse = false;
-        return '';
+    case Tag.Mark: {
+      return `[myMark=${openTag.attributes.value}]${content}[/myMark]`;
     }
+    case Tag.Underline:
+      return `[underline]${content}[/underline]`;
+    case Tag.Italic:
+      return `[italic]${content}[/italic]`;
+    case Tag.Bold:
+      return `[bold]${content}[/bold]`;
+    case Tag.Font:
+      return `[font="${openTag.attributes.value}"]${content}[/font]`;
+    case Tag.Sprite:
+      return `[sprite="${openTag.attributes.value}", "${openTag.attributes.foo}"]${content}[/sprite]`;
   }
 
-  return '';
+  return content;
 };
 
 describe('transform', function () {
