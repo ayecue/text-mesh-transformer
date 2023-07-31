@@ -1,6 +1,10 @@
 const { transform, Tag, TagRecordOpen, TagRecordClose } = require('../dist/index.js');
 
-const testCallback = (tag) => {
+const testCallback = (tag, context) => {
+  if (tag.type !== Tag.NoParse && context.noParse) {
+    return tag.raw;
+  }
+
   if (tag instanceof TagRecordOpen) {
     switch (tag.type) {
       case Tag.Color: {
@@ -19,6 +23,9 @@ const testCallback = (tag) => {
         return `[font="${tag.attributes.value}"]`;
       case Tag.Sprite:
         return `[sprite="${tag.attributes.value}", "${tag.attributes.foo}"]`;
+      case Tag.NoParse:
+        context.noParse = true;
+        return '';
     }
   } else if (tag instanceof TagRecordClose) {
     switch (tag.type) {
@@ -38,6 +45,9 @@ const testCallback = (tag) => {
         return `[/font]`;
       case Tag.Sprite:
         return `[/sprite]`;
+      case Tag.NoParse:
+        context.noParse = false;
+        return '';
     }
   }
 
@@ -120,6 +130,14 @@ describe('transform', function () {
   test('color shorthand', function () {
     const result = transform(`
     was <#333666>test</color>
+    `, testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
+
+  test('context', function () {
+    const result = transform(`
+    was <noparse><#333666>test</color>
     `, testCallback);
 
     expect(result).toMatchSnapshot();

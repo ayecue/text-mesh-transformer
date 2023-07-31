@@ -32,6 +32,7 @@ export class TagElementWithAttributes extends TagElement {
 export interface ParserResult {
   item?: {
     element: TagElement | TagElementWithAttributes;
+    raw: string;
     start: number;
     end: number;
   };
@@ -203,6 +204,7 @@ export class Parser {
     return {
       item: {
         element,
+        raw: this.buffer.slice(startIndex, this.index),
         start: startIndex,
         end: this.index
       },

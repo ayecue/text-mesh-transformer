@@ -25,30 +25,33 @@ export function transform(str: string, callback: TagCallback): string {
   const tokenizer = new Parser(str);
   const tags: TagRecord[] = [];
   const openTags: TagRecord[] = [];
+  const context = {};
   let match: ParserResult;
 
   while ((match = tokenizer.next())) {
     if (match.isEnd) break;
     if (!match.item) continue;
 
-    const { element, start, end } = match.item;
+    const { element, raw, start, end } = match.item;
 
     if (element.type === TagElementType.Open) {
       if (element instanceof TagElementWithAttributes) {
         const tagWithAttr = new TagRecordOpen({
           type: element.tag,
+          raw,
           attributes: element.attributes,
           start,
           end
-        });
+        }).transform(context, callback);
         tags.push(tagWithAttr);
         openTags.push(tagWithAttr);
       } else {
         const tagWithoutAttr = new TagRecordOpen({
           type: element.tag,
+          raw,
           start,
           end
-        });
+        }).transform(context, callback);
         tags.push(tagWithoutAttr);
         openTags.push(tagWithoutAttr);
       }
@@ -60,12 +63,11 @@ export function transform(str: string, callback: TagCallback): string {
 
         const closingTag = new TagRecordClose({
           type: element.tag,
+          raw,
           start,
           end,
           previous: lastTag as TagRecordOpen
-        });
-
-        (lastTag as TagRecordOpen).next = closingTag;
+        }).transform(context, callback);
 
         tags.push(closingTag);
       }
@@ -77,12 +79,11 @@ export function transform(str: string, callback: TagCallback): string {
   while ((remainingTag = openTags.pop())) {
     const closingTag = new TagRecordClose({
       type: remainingTag.type,
+      raw: '',
       start: str.length,
       end: str.length,
       previous: remainingTag as TagRecordOpen
-    });
-
-    (remainingTag as TagRecordOpen).next = closingTag;
+    }).transform(context, callback);
 
     tags.push(closingTag);
   }
@@ -94,7 +95,7 @@ export function transform(str: string, callback: TagCallback): string {
     const left = output.substring(0, currentTag.start);
     const right = output.substring(currentTag.end, output.length);
 
-    output = left + callback(currentTag) + right;
+    output = left + currentTag.out + right;
   }
 
   return output;

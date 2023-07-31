@@ -6,6 +6,12 @@ exports[`transform color shorthand 1`] = `
     "
 `;
 
+exports[`transform context 1`] = `
+"
+    was <#333666>test</color>
+    "
+`;
+
 exports[`transform invalid closing of tag 1`] = `
 "
     was [myColor=red]test [bold]wd xad</color>
