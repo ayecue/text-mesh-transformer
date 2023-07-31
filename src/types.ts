@@ -87,3 +87,5 @@ export const tagsWithValue: string[] = [
   Tag.VOffset,
   Tag.Width
 ];
+
+export const tagsWithNoBody: string[] = [Tag.Sprite, Tag.Pos];

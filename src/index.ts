@@ -5,6 +5,7 @@ import {
   TagElementWithAttributes
 } from './parser';
 import { TagCallback, TagRecordClose, TagRecordOpen } from './tag-record';
+import { tagsWithNoBody } from './types';
 
 export {
   TagCallback,
@@ -47,10 +48,32 @@ export function transform(str: string, callback: TagCallback): string {
         });
         openTags.push(tagWithoutAttr);
       }
+
+      if (tagsWithNoBody.includes(element.tag)) {
+        const lastTag = openTags.pop()!;
+
+        const closingTag = new TagRecordClose({
+          type: element.tag,
+          raw: '',
+          start: end,
+          end,
+          previous: lastTag as TagRecordOpen
+        });
+        lastTag.next = closingTag;
+        lastTag.content = '';
+
+        if (openTags.length > 0) {
+          const before = openTags[openTags.length - 1];
+          before.children.unshift(closingTag);
+          lastTag.parent = before;
+        } else {
+          tags.push(closingTag);
+        }
+      }
     } else if (element.type === TagElementType.Close) {
       const lastTag = openTags[openTags.length - 1];
 
-      if (element.tag === lastTag.type) {
+      if (element.tag === lastTag?.type) {
         openTags.pop();
 
         const closingTag = new TagRecordClose({
@@ -122,13 +145,14 @@ export function transform(str: string, callback: TagCallback): string {
     const endClosureIndex = Math.min(currentTag.end - offset, output.length);
 
     const left = content.substring(0, startClosureIndex);
-    const right = content.substring(endClosureIndex, output.length);
+    const right = content.substring(endClosureIndex);
 
     if (currentTag.previous.parent) {
       const transformed = callback(currentTag.previous, childContent);
       currentTag.previous.parent.content = left + transformed + right;
     } else {
-      output = left + callback(currentTag.previous, childContent) + right;
+      const transformed = callback(currentTag.previous, childContent);
+      output = left + transformed + right;
     }
   }
 

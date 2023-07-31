@@ -38,7 +38,7 @@ describe('transform', function () {
 
   test('tag with two attributes', function () {
     const result = transform(`
-    was <sprite=0 foo=somename>test </sprite> xad
+    was <sprite=0 foo=somename>test xad
     `, testCallback);
 
     expect(result).toMatchSnapshot();

@@ -64,7 +64,7 @@ exports[`transform style without value 1`] = `
 
 exports[`transform tag with two attributes 1`] = `
 "
-    was [sprite=\\"0\\", \\"somename\\"]test [/sprite] xad
+    was [sprite=\\"0\\", \\"somename\\"][/sprite]test xad
     "
 `;
 
