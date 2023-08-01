@@ -118,15 +118,11 @@ export function transform(str: string, callback: TagCallback): string {
   let remainingTag: TagRecordOpen | undefined;
 
   while ((remainingTag = openTags.pop())) {
-    const closingTag = new TagRecordClose({
-      type: remainingTag.type,
-      raw: '',
+    const closingTag = remainingTag.close({
       start: str.length,
       end: str.length,
-      previous: remainingTag
+      content: str.slice(remainingTag.end, str.length)
     });
-    remainingTag.next = closingTag;
-    remainingTag.content = str.slice(remainingTag.end, closingTag.start);
 
     if (openTags.length > 0) {
       const before = openTags[openTags.length - 1] as TagRecordOpen;
