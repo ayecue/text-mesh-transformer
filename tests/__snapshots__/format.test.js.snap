@@ -14,26 +14,26 @@ exports[`transform context 1`] = `
 
 exports[`transform invalid closing of tag 1`] = `
 "
-    was [myColor=red]test [bold]wd xad</color>
-    [/bold][/myColor]"
+    was [myColor=red]test [bold]wd xad</color>[/bold][/myColor]
+    "
 `;
 
 exports[`transform multiline 1`] = `
 "
-    [myColor=red]
+    [myColor=red][/myColor]
     title - text
 
     -a --abc - [bold]description[/bold]
     -a --abc - [bold]description[/bold]
     -a --abc - [bold]description[/bold]
     -a --abc - [bold]description[/bold]
-    [/myColor]
+    </color>
     "
 `;
 
 exports[`transform multiline 2 1`] = `
 "[bold][underline]tedit[/underline][/bold]
-    [myColor=yellow]1 | 	[/myColor][myMark=#ff00aa]$
+    [myColor=yellow]1 | 	[/myColor][myMark=#ff00aa]$[/myMark]
     2 | 	[myColor=#FFF]test[/myColor] = [myColor=#E11584]function[/myColor]()
     3 | 		[myColor=#FFF]myTest[/myColor] = [myColor=#F9D71C]\\"hello world\\"[/myColor]
     4 | 		[myColor=#009dc4]print[/myColor]([myColor=#FFF]myTest[/myColor])
@@ -41,13 +41,25 @@ exports[`transform multiline 2 1`] = `
     6 | 	
     7 | 	[myColor=#FFF]test[/myColor]
     8 | 
-    [/myMark]"
+    "
+`;
+
+exports[`transform newline 1`] = `
+"[bold]Title: [/bold]
+   [bold]description[/bold]
+       text: text
+       text: text
+
+   [myColor=red]bet (amount) (slotNumber)[/myColor]
+       ex:  bet 100 7
+       ex:  bet 100 0
+       ex:  bet 100 00"
 `;
 
 exports[`transform simple 1`] = `
 "
-    was [myColor=red]test [myColor=blue][underline][bold]wd[/bold][/underline][/myColor] xad
-    [/myColor]"
+    was [myColor=red]test [myColor=blue][underline][bold]wd[/bold][/underline][/myColor] xad[/myColor]
+    "
 `;
 
 exports[`transform style with value in quotes 1`] = `
@@ -70,24 +82,24 @@ exports[`transform tag with two attributes 1`] = `
 
 exports[`transform two top level tags 1`] = `
 "
-    was [myColor=red]test[/myColor] [myColor=blue][bold]wd xad
-    [/bold][/myColor]"
+    was [myColor=red]test[/myColor] [myColor=blue][bold]wd xad[/bold][/myColor]
+    "
 `;
 
 exports[`transform two top level tags with inner styles 1`] = `
 "
-    was [myColor=red]te[underline]st[/underline][/myColor] [myColor=blue][bold]wd xad
-    [/bold][/myColor]"
+    was [myColor=red]te[underline]st[/underline][/myColor] [myColor=blue][bold]wd xad[/bold][/myColor]
+    "
 `;
 
 exports[`transform unknown tags 1`] = `
 "
-    was [myColor=red]test <unknown>wd xad
-    [/myColor]"
+    was [myColor=red]test <unknown>wd xad[/myColor]
+    "
 `;
 
 exports[`transform without close tags 1`] = `
 "
-    was [myColor=red]test [myColor=blue][underline][bold]wd xad
-    [/bold][/underline][/myColor][/myColor]"
+    was [myColor=red]test [myColor=blue][underline][bold]wd xad[/bold][/underline][/myColor][/myColor]
+    "
 `;

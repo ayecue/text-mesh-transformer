@@ -32,7 +32,7 @@ export enum Tag {
   Width = 'width'
 }
 
-export const allTags: string[] = [
+export const allTags: Set<string> = new Set([
   Tag.Align,
   Tag.Alpha,
   Tag.Color,
@@ -64,9 +64,9 @@ export const allTags: string[] = [
   Tag.Sup,
   Tag.VOffset,
   Tag.Width
-];
+]);
 
-export const tagsWithValue: string[] = [
+export const tagsWithValue: Set<string> = new Set([
   Tag.Align,
   Tag.Alpha,
   Tag.Color,
@@ -86,14 +86,14 @@ export const tagsWithValue: string[] = [
   Tag.Style,
   Tag.VOffset,
   Tag.Width
-];
+]);
 
-export const tagsWithNoBody: string[] = [Tag.Sprite, Tag.Pos];
-export const tagsAutoclose: string[] = [
+export const tagsWithNoBody: Set<Tag> = new Set([Tag.Sprite, Tag.Pos]);
+export const tagsAutoclose: Set<Tag> = new Set([
   Tag.VOffset,
   Tag.Size,
   Tag.CSpace,
   Tag.Align,
   Tag.Width,
   Tag.Font
-];
+]);

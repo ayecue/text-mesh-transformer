@@ -1,4 +1,7 @@
 import {
+  ElementType,
+  isParserResultWithBody,
+  isParserResultWithNewline,
   Parser,
   ParserResult,
   TagElementType,
@@ -24,13 +27,37 @@ export function transform(str: string, callback: TagCallback): string {
   let match: ParserResult;
 
   while ((match = tokenizer.next())) {
-    if (match.isEnd) break;
-    if (!match.item) continue;
+    if (match.type === ElementType.EOF) break;
+    if (match.type === ElementType.Noop) continue;
+    if (isParserResultWithNewline(match)) {
+      let remainingTag: TagRecordOpen | undefined;
+
+      while ((remainingTag = openTags.pop())) {
+        const closingTag = remainingTag.close({
+          start: match.index,
+          end: match.index,
+          content: str.slice(remainingTag.end, match.index)
+        });
+
+        if (openTags.length > 0) {
+          const before = openTags[openTags.length - 1] as TagRecordOpen;
+          before.children.unshift(closingTag);
+          remainingTag.parent = before;
+        } else {
+          tags.push(closingTag);
+        }
+      }
+      continue;
+    }
+
+    if (!isParserResultWithBody(match)) {
+      throw new Error('Unexpected item.');
+    }
 
     const { element, raw, start, end } = match.item;
 
     if (element.type === TagElementType.Open) {
-      if (tagsAutoclose.includes(element.tag)) {
+      if (tagsAutoclose.has(element.tag)) {
         const previousItem = openTags.findIndex(
           (item) => item.type === element.tag
         );
@@ -79,7 +106,7 @@ export function transform(str: string, callback: TagCallback): string {
         openTags.push(tagWithoutAttr);
       }
 
-      if (tagsWithNoBody.includes(element.tag)) {
+      if (tagsWithNoBody.has(element.tag)) {
         const lastTag = openTags.pop()!;
         const closingTag = lastTag.close();
 

@@ -145,4 +145,20 @@ describe('transform', function () {
 
     expect(result).toMatchSnapshot();
   })
+
+  test('newline', function() {
+    const result = transform([
+      "<b>Title: ",
+      "   <b>description",
+      "       text: text",
+      "       text: text",
+      "",
+      "   <color=red>bet (amount) (slotNumber)",
+      "       ex:  bet 100 7",
+      "       ex:  bet 100 0",
+      "       ex:  bet 100 00"
+    ].join('\n'), testCallback);
+
+    expect(result).toMatchSnapshot();
+  });
 });

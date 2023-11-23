@@ -29,15 +29,43 @@ export class TagElementWithAttributes extends TagElement {
   }
 }
 
+export enum ElementType {
+  Tag,
+  Newline,
+  EOF,
+  Noop
+}
+
 export interface ParserResult {
-  item?: {
+  type: ElementType;
+}
+
+export interface ParserResultWithNewline {
+  type: ElementType.Newline;
+  index: number;
+}
+
+export interface ParserResultWithBody extends ParserResult {
+  type: ElementType.Tag;
+  item: {
     element: TagElement | TagElementWithAttributes;
     raw: string;
     start: number;
     end: number;
   };
-  isEnd: boolean;
 }
+
+export const isParserResultWithBody = (
+  item: ParserResult
+): item is ParserResultWithBody => {
+  return item.type === ElementType.Tag;
+};
+
+export const isParserResultWithNewline = (
+  item: ParserResult
+): item is ParserResultWithNewline => {
+  return item.type === ElementType.Newline;
+};
 
 export class Parser {
   private buffer: string;
@@ -122,11 +150,11 @@ export class Parser {
 
     const tag = this.parseName();
 
-    if (!allTags.includes(tag)) {
+    if (!allTags.has(tag)) {
       return null;
     }
 
-    if (!tagsWithValue.includes(tag)) {
+    if (!tagsWithValue.has(tag)) {
       return new TagElement(tag as Tag, TagElementType.Open);
     }
 
@@ -159,7 +187,7 @@ export class Parser {
 
     const tag = this.parseName();
 
-    if (!allTags.includes(tag)) {
+    if (!allTags.has(tag)) {
       return null;
     }
 
@@ -168,16 +196,27 @@ export class Parser {
     return new TagElement(tag as Tag, TagElementType.Close);
   }
 
-  next(): ParserResult {
-    const startIndex = this.buffer.indexOf('<', this.index);
+  next(): ParserResult | ParserResultWithBody | ParserResultWithNewline {
+    const lastIndex = this.index;
+    const sub = this.buffer.substring(lastIndex);
+    const startIndex = sub.search(/<|\n/);
 
     if (startIndex === -1) {
       return {
-        isEnd: true
+        type: ElementType.EOF
       };
     }
 
-    this.index = startIndex + 1;
+    this.index = startIndex + lastIndex + 1;
+    const next = sub.substring(startIndex);
+
+    if (next.startsWith('\n')) {
+      return {
+        type: ElementType.Newline,
+        index: this.index - 1
+      };
+    }
+
     let element: TagElement | TagElementWithAttributes | null;
 
     if (this.buffer[this.index] === '/') {
@@ -189,26 +228,26 @@ export class Parser {
 
     if (element === null) {
       return {
-        isEnd: false
+        type: ElementType.Noop
       };
     }
 
     if (this.buffer[this.index] !== '>') {
       return {
-        isEnd: false
+        type: ElementType.Noop
       };
     }
 
     this.index++;
 
     return {
+      type: ElementType.Tag,
       item: {
         element,
-        raw: this.buffer.slice(startIndex, this.index),
-        start: startIndex,
+        raw: this.buffer.slice(startIndex + lastIndex, this.index),
+        start: startIndex + lastIndex,
         end: this.index
-      },
-      isEnd: false
+      }
     };
   }
 }
