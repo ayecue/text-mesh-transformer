@@ -94,7 +94,11 @@ export const tagsWithValue: Set<string> = new Set([
   Tag.Scale
 ]);
 
-export const tagsWithNoBody: Set<Tag> = new Set([Tag.Sprite, Tag.Space, Tag.Pos]);
+export const tagsWithNoBody: Set<Tag> = new Set([
+  Tag.Sprite,
+  Tag.Space,
+  Tag.Pos
+]);
 export const tagsAutoclose: Set<Tag> = new Set([
   Tag.VOffset,
   Tag.Size,
