@@ -8,7 +8,7 @@ import {
   TagElementWithAttributes
 } from './parser';
 import { TagCallback, TagRecordClose, TagRecordOpen } from './tag-record';
-import { tagsAutoclose, tagsWithNoBody } from './types';
+import { tagsWithNoBody } from './types';
 
 export {
   TagCallback,
@@ -57,36 +57,6 @@ export function transform(str: string, callback: TagCallback): string {
     const { element, raw, start, end } = match.item;
 
     if (element.type === TagElementType.Open) {
-      if (tagsAutoclose.has(element.tag)) {
-        const previousItem = openTags.findIndex(
-          (item) => item.type === element.tag
-        );
-
-        if (previousItem !== -1) {
-          let currentTag: TagRecordOpen | undefined;
-
-          while ((currentTag = openTags.pop())) {
-            const closingTag = currentTag.close({
-              start,
-              end: start,
-              content: str.slice(currentTag.end, start)
-            });
-
-            if (openTags.length > 0) {
-              const before = openTags[openTags.length - 1];
-              before.children.unshift(closingTag);
-              currentTag.parent = before;
-            } else {
-              tags.push(closingTag);
-            }
-
-            if (currentTag.type === element.tag) {
-              break;
-            }
-          }
-        }
-      }
-
       if (element instanceof TagElementWithAttributes) {
         const tagWithAttr = new TagRecordOpen({
           type: element.tag,
