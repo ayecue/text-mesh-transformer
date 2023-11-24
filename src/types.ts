@@ -29,7 +29,9 @@ export enum Tag {
   Sub = 'sub',
   Sup = 'sup',
   VOffset = 'voffset',
-  Width = 'width'
+  Width = 'width',
+  Rotate = 'rotate',
+  Scale = 'scale'
 }
 
 export const allTags: Set<string> = new Set([
@@ -63,7 +65,9 @@ export const allTags: Set<string> = new Set([
   Tag.Sub,
   Tag.Sup,
   Tag.VOffset,
-  Tag.Width
+  Tag.Width,
+  Tag.Rotate,
+  Tag.Scale
 ]);
 
 export const tagsWithValue: Set<string> = new Set([
@@ -85,15 +89,22 @@ export const tagsWithValue: Set<string> = new Set([
   Tag.Sprite,
   Tag.Style,
   Tag.VOffset,
-  Tag.Width
+  Tag.Width,
+  Tag.Rotate,
+  Tag.Scale
 ]);
 
-export const tagsWithNoBody: Set<Tag> = new Set([Tag.Sprite, Tag.Pos]);
+export const tagsWithNoBody: Set<Tag> = new Set([
+  Tag.Sprite,
+  Tag.Space,
+  Tag.Pos
+]);
 export const tagsAutoclose: Set<Tag> = new Set([
   Tag.VOffset,
   Tag.Size,
   Tag.CSpace,
   Tag.Align,
   Tag.Width,
-  Tag.Font
+  Tag.Font,
+  Tag.Pos
 ]);

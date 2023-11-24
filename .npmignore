@@ -4,3 +4,6 @@ tsconfig.json
 .circleci
 tests
 test.js
+rollup.config.js
+test.html
+bundled.test.js

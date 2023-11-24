@@ -1,3 +1,6 @@
 node_modules
 dist
 test.js
+rollup.config.js
+test.html
+bundled.test.js
